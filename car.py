@@ -78,12 +78,20 @@ class Car:
         if not self.alive:
             return
         
-        # 조향
-        turn = outputs[0] * CAR_TURN_SPEED
+        # 조향 - 데드존 적용 (|값| < 0.1 이면 무시)
+        steering = outputs[0]
+        if abs(steering) < 0.1:
+            turn = 0
+        else:
+            turn = steering * CAR_TURN_SPEED
         self.angle += turn
         
-        # 가속/감속
-        self.acceleration = outputs[1] * CAR_ACCELERATION
+        # 가속 - 데드존 적용
+        accel = outputs[1]
+        if abs(accel) < 0.1:
+            self.acceleration = 0
+        else:
+            self.acceleration = accel * CAR_ACCELERATION
     
     def update(self, track) -> bool:
         """

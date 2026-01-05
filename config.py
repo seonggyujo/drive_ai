@@ -20,10 +20,10 @@ CAR_COUNT = 20
 CAR_WIDTH = 30
 CAR_HEIGHT = 16
 CAR_MAX_SPEED = 8
-CAR_MIN_SPEED = 0  # 멈출 수 있도록 0으로 변경
+CAR_MIN_SPEED = 2  # 최소 속도 유지 (항상 전진)
 CAR_ACCELERATION = 0.3
 CAR_FRICTION = 0.05
-CAR_TURN_SPEED = 3  # 회전 속도 (도/프레임) - 더 부드럽게
+CAR_TURN_SPEED = 3  # 회전 속도 (도/프레임)
 
 # === 센서 설정 ===
 SENSOR_COUNT = 5

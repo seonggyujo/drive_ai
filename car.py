@@ -86,12 +86,10 @@ class Car:
             turn = steering * CAR_TURN_SPEED
         self.angle += turn
         
-        # 가속 - 데드존 적용
-        accel = outputs[1]
-        if abs(accel) < 0.1:
-            self.acceleration = 0
-        else:
-            self.acceleration = accel * CAR_ACCELERATION
+        # 가속 - 전진 전용 모드 (-1~1 → 0~1 변환)
+        # 항상 전진, 출력값이 클수록 빠르게
+        accel = (outputs[1] + 1) / 2  # -1~1 → 0~1
+        self.acceleration = accel * CAR_ACCELERATION
     
     def update(self, track) -> bool:
         """

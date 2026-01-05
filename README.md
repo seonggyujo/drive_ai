@@ -6,7 +6,7 @@ NEAT 알고리즘을 사용한 자율주행 AI 학습 시각화 프로젝트입�
 
 ## 데모
 
-![demo](https://via.placeholder.com/800x450?text=Demo+GIF+Coming+Soon)
+![구현](구현.png)
 
 ## 주요 기능
 

@@ -7,7 +7,7 @@
 import pygame
 from typing import List, Optional
 
-from config import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT
+from config import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT, PANEL_X
 from track import Track
 from car import Car
 
@@ -17,8 +17,13 @@ class Visualizer:
         self.screen = screen
         
     def draw_background(self):
-        """배경 그리기"""
-        self.screen.fill(COLORS['track_grass'])
+        """배경 그리기 - iOS 다크 테마"""
+        # 전체 배경
+        self.screen.fill(COLORS['bg_primary'])
+        
+        # 트랙 영역 배경 (좌측)
+        track_area = pygame.Rect(0, 0, PANEL_X, SCREEN_HEIGHT)
+        pygame.draw.rect(self.screen, COLORS['track_grass'], track_area)
     
     def draw_track(self, track: Track):
         """트랙 그리기"""
@@ -80,7 +85,4 @@ class Visualizer:
         # 차량들
         self.draw_cars(cars, best_car_id)
         
-        # 정보 (UI 패널이 있으면 이건 생략 가능)
-        alive_count = sum(1 for car in cars if car.alive)
-        best_fitness = max((car.fitness for car in cars), default=0)
-        self.draw_generation_info(generation, alive_count, len(cars), time_left, best_fitness)
+        # UI 패널에서 정보 표시하므로 좌상단 정보는 생략

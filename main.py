@@ -11,8 +11,8 @@ from typing import List, Tuple, Optional
 
 from config import (
     SCREEN_WIDTH, SCREEN_HEIGHT, FPS,
-    CAR_COUNT, GENERATION_TIME,
-    COLORS, NEAT_CONFIG_PATH
+    CAR_COUNT, GENERATION_TIME, SPEED_OPTIONS,
+    COLORS, NEAT_CONFIG_PATH, PANEL_X
 )
 from track import Track
 from car import Car
@@ -25,7 +25,7 @@ class SelfDrivingSimulation:
     
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("자율주행 AI 학습 시각화")
+        pygame.display.set_caption("Self-Driving AI")
         
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -39,6 +39,9 @@ class SelfDrivingSimulation:
         self.generation = 0
         self.running = True
         self.paused = False
+        
+        # 배속 설정
+        self.speed_multiplier = 1
         
         # 현재 세대의 차량들과 신경망
         self.cars: List[Car] = []
@@ -100,6 +103,7 @@ class SelfDrivingSimulation:
     def _run_generation(self):
         """한 세대 시뮬레이션 실행"""
         start_time = time.time()
+        time_left = GENERATION_TIME
         
         while True:
             # 이벤트 처리
@@ -115,10 +119,13 @@ class SelfDrivingSimulation:
                         sys.exit()
                     elif event.key == pygame.K_SPACE:
                         self.paused = not self.paused
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    # 배속 버튼 클릭 처리
+                    self.ui_panel.handle_click(event.pos, self)
             
             # 일시정지 중이면 렌더링만
             if self.paused:
-                self._render()
+                self._render(time_left)
                 self.clock.tick(FPS)
                 continue
             
@@ -131,13 +138,20 @@ class SelfDrivingSimulation:
             if elapsed_time >= GENERATION_TIME or alive_count == 0:
                 break
             
-            # 차량 업데이트
-            self._update_cars()
+            # 배속만큼 시뮬레이션 업데이트 (프레임 스킵)
+            for _ in range(self.speed_multiplier):
+                # 차량 업데이트
+                self._update_cars()
+                
+                # 최고 차량 찾기
+                self._find_best_car()
+                
+                # 모든 차량 사망 체크
+                alive_count = sum(1 for car in self.cars if car.alive)
+                if alive_count == 0:
+                    break
             
-            # 최고 차량 찾기
-            self._find_best_car()
-            
-            # 렌더링
+            # 렌더링은 1번만 (프레임 스킵)
             self._render(time_left)
             
             # FPS 제한
@@ -198,6 +212,7 @@ class SelfDrivingSimulation:
             len(self.cars),
             time_left,
             best_fitness,
+            self.speed_multiplier,
             self.best_genome,
             self.best_net
         )
@@ -210,19 +225,22 @@ class SelfDrivingSimulation:
         pygame.display.flip()
     
     def _draw_pause_overlay(self):
-        """일시정지 오버레이"""
-        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 128))
+        """일시정지 오버레이 - iOS 스타일"""
+        # 반투명 오버레이
+        overlay = pygame.Surface((PANEL_X, SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
         self.screen.blit(overlay, (0, 0))
         
-        font = pygame.font.SysFont('malgungothic', 48, bold=True)
-        text = font.render("일시정지", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        # 일시정지 텍스트
+        font = pygame.font.SysFont('malgungothic', 42, bold=True)
+        text = font.render("일시정지", True, COLORS['text_primary'])
+        text_rect = text.get_rect(center=(PANEL_X // 2, SCREEN_HEIGHT // 2 - 20))
         self.screen.blit(text, text_rect)
         
-        font_small = pygame.font.SysFont('malgungothic', 24)
-        hint = font_small.render("스페이스바를 눌러 계속", True, (200, 200, 200))
-        hint_rect = hint.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
+        # 힌트 텍스트
+        font_small = pygame.font.SysFont('malgungothic', 18)
+        hint = font_small.render("Space 를 눌러 계속", True, COLORS['text_secondary'])
+        hint_rect = hint.get_rect(center=(PANEL_X // 2, SCREEN_HEIGHT // 2 + 30))
         self.screen.blit(hint, hint_rect)
     
     def run(self):
@@ -241,7 +259,7 @@ class SelfDrivingSimulation:
         # NEAT 집단 생성
         population = neat.Population(config)
         
-        # 통계 리포터 추가
+        # 통계 리포터 추가 (콘솔 출력)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
         population.add_reporter(stats)
@@ -261,11 +279,12 @@ class SelfDrivingSimulation:
 def main():
     """메인 함수"""
     print("=" * 50)
-    print("  자율주행 AI 학습 시각화")
+    print("  Self-Driving AI Visualization")
     print("=" * 50)
     print("\n조작법:")
     print("  - ESC: 종료")
-    print("  - 스페이스바: 일시정지/재개")
+    print("  - Space: 일시정지/재개")
+    print("  - 마우스: 배속 버튼 클릭 (x1, x5, x10)")
     print("\n학습을 시작합니다...\n")
     
     simulation = SelfDrivingSimulation()
